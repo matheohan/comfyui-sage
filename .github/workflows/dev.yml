@@ -3,7 +3,7 @@ name: Dev Release
 on:
   push:
     tags:
-      - 'dev-*.*.*'
+      - 'dev-[0-9]+.[0-9]+.[0-9]+'
 
 env:
   REGISTRY: ghcr.io

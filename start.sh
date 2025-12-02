@@ -163,7 +163,7 @@ start_jupyter
 export_env_vars
 
 # ComfyUI specific startup
-install_sageattention
+# install_sageattention
 start_comfyui
 download_model_files
 
