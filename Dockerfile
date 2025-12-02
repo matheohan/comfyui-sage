@@ -39,12 +39,11 @@ RUN pip install huggingface-hub
 RUN mkdir -p models/text_encoders models/diffusion_models models/vae
 
 # Copy start script
-COPY start.sh /workspace/ComfyUI/start.sh
-RUN chmod +x /workspace/ComfyUI/start.sh
+COPY start.sh /start.sh
+RUN chmod +x /start.sh
 
 # Expose ports for SSH, Jupyter, and ComfyUI
 EXPOSE 22 8888 8188
 
-# Set entrypoint to start script and CMD for additional args
-ENTRYPOINT ["/workspace/ComfyUI/start.sh"]
-CMD []
+# Set default command to run start script
+CMD ["/start.sh"]
