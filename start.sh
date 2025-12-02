@@ -1,4 +1,7 @@
 #!/bin/bash
+echo -- Installing SageAttention wheel --
+pip install https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl
+
 echo -- Start comfyUI --
 python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &
 
