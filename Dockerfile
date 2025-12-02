@@ -26,7 +26,7 @@ RUN git clone https://github.com/ltdrdata/ComfyUI-Manager ./custom_nodes/comfyui
 RUN pip install -r requirements.txt
 
 # Install the SageAttention wheel based on GPU compute capability
-RUN pip install https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl; \
+RUN pip install --no-deps https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl
 
 # Install additional dependencies
 RUN pip install huggingface-hub

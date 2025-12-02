@@ -40,8 +40,6 @@ jobs:
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache/CodeQL
-          sudo docker system prune -af
-          df -h
 
       # Buildx enables caching
       - name: Set up Docker Buildx
