@@ -3,7 +3,7 @@ name: Dev Release
 on:
   push:
     tags:
-      - 'dev-v*.*.*'
+      - 'dev-*.*.*'
 
 env:
   REGISTRY: ghcr.io
@@ -36,12 +36,10 @@ jobs:
       # Free up disk space for large Docker builds
       - name: Free disk space
         run: |
-          df -h 
           sudo rm -rf /usr/share/dotnet
           sudo rm -rf /usr/local/lib/android
           sudo rm -rf /opt/ghc
           sudo rm -rf /opt/hostedtoolcache/CodeQL
-          df -h 
 
       # Buildx enables caching
       - name: Set up Docker Buildx
@@ -56,10 +54,10 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       # Extract version number from tag and set as output
-      # Converts "refs/tags/v1.0.0" → "1.0.0"
+      # Converts "refs/tags/1.0.0" → "1.0.0"
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/dev-v}" >> $GITHUB_OUTPUT
+        run: echo "version=${GITHUB_REF#refs/tags/dev-}" >> $GITHUB_OUTPUT
 
       # Build Dockerfile and push to registry (use buildx instead of docker build)
       - name: Build and push Docker image
