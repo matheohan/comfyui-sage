@@ -49,7 +49,7 @@ jobs:
       # Converts "refs/tags/v1.0.0" → "1.0.0"
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: echo "version=${GITHUB_REF#refs/tags/dev-v}" >> $GITHUB_OUTPUT
 
       # Build Dockerfile and push to registry (use buildx instead of docker build)
       - name: Build and push Docker image
