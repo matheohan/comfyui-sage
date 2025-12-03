@@ -91,7 +91,7 @@ start_jupyter() {
 start_comfyui() {
     echo "Starting ComfyUI..."
     cd /workspace/ComfyUI
-    nohup python main.py --fast fp16_accumulation --listen 0.0.0.0 &> /comfyui.log &
+    nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /comfyui.log &
     echo "ComfyUI started"
 }
 

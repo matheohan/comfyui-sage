@@ -19,15 +19,18 @@ WORKDIR /workspace
 RUN git clone https://github.com/comfyanonymous/ComfyUI.git
 WORKDIR /workspace/ComfyUI
 
-# Install ComfyUI Manager
+# Install ComfyUI Manager and its dependencies
 RUN git clone https://github.com/ltdrdata/ComfyUI-Manager ./custom_nodes/comfyui-manager
+WORKDIR /workspace/ComfyUI/custom_nodes/comfyui-manager
+RUN pip install -r requirements.txt
 
-# Install dependencies
+# Install dependencies from ComfyUI requirements
+WORKDIR /workspace/ComfyUI
 RUN pip install -r requirements.txt
 
 # Install additional dependencies
 RUN pip install huggingface-hub
-RUN pip install https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}${PYTHON_VERSION}-linux_x86_64.whl
+RUN pip install https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl
 
 # Create directory for ComfyUI (-p to avoid errors if they already exist)
 RUN mkdir -p models/text_encoders models/diffusion_models models/vae
