@@ -1,4 +1,4 @@
-name: Dev Release
+name: Build Dev Images
 
 on:
   push:

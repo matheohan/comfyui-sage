@@ -1,15 +1,12 @@
-name: Create Release
+name: Create GitHub Release
 
 on:
-  pull_request:
-    branches:
-      - main
-    types:
-      - closed
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
 
 jobs:
   release:
-    if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -18,15 +15,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Get version from PR title
+      - name: Extract version from tag
         id: version
-        run: |
-          VERSION=$(echo "${{ github.event.pull_request.title }}" | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)
-          if [ -z "$VERSION" ]; then
-            echo "No version found in PR title"
-            exit 1
-          fi
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
       - name: Generate image list from matrix
         id: images
