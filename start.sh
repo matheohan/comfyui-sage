@@ -87,13 +87,6 @@ start_jupyter() {
 #                           ComfyUI Specific Functions                         #
 # ---------------------------------------------------------------------------- #
 
-# Install SageAttention wheel
-install_sageattention() {
-    echo "Installing SageAttention wheel..."
-    pip install "https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl"
-    echo "SageAttention installed"
-}
-
 # Start comfyUI server
 start_comfyui() {
     echo "Starting ComfyUI..."
@@ -105,7 +98,6 @@ start_comfyui() {
 # Download model files in parallel
 download_model_files() {
     echo "-- Downloading model files in parallel --"
-
     cd /workspace/ComfyUI
 
     # Login to Hugging Face if token is provided
@@ -119,19 +111,19 @@ download_model_files() {
     # Download in parallel
     hf download Comfy-Org/z_image_turbo \
         split_files/text_encoders/qwen_3_4b.safetensors \
-        --local-dir "$TEMP_DIR" --local-dir-use-symlinks False &
+        --local-dir "$TEMP_DIR" &
     PID1=$! 
     
     hf download Comfy-Org/z_image_turbo \
         split_files/diffusion_models/z_image_turbo_bf16.safetensors \
-        --local-dir "$TEMP_DIR" --local-dir-use-symlinks False &
+        --local-dir "$TEMP_DIR" &
     PID2=$! 
     
     hf download Comfy-Org/z_image_turbo \
         split_files/vae/ae.safetensors \
-        --local-dir "$TEMP_DIR" --local-dir-use-symlinks False &
+        --local-dir "$TEMP_DIR" &
     PID3=$! 
-    
+
     # Wait for all downloads
     echo "Waiting for downloads..."
     wait $PID1 $PID2 $PID3
@@ -163,7 +155,6 @@ start_jupyter
 export_env_vars
 
 # ComfyUI specific startup
-# install_sageattention
 start_comfyui
 download_model_files
 

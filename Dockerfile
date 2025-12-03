@@ -9,17 +9,10 @@ FROM runpod/pytorch:${RUNPOD_VERSION}-${CUDA_VERSION}-${TORCH_VERSION}-${UBUNTU_
 
 # Re-declare ARGs to receive --build-arg values
 ARG SAGE_ATTENTION_VERSION=2.2.0
-ARG COMPUTE_CAP=86
-ARG PYTHON_VERSION=cp311
 ARG CUDA_VERSION=cu1281
 ARG TORCH_VERSION=torch280
-
-# Environment variables for start.sh
-ENV SAGE_ATTENTION_VERSION=${SAGE_ATTENTION_VERSION}
-ENV COMPUTE_CAP=${COMPUTE_CAP}
-ENV PYTHON_VERSION=${PYTHON_VERSION}
-ENV CUDA_VERSION=${CUDA_VERSION}
-ENV TORCH_VERSION=${TORCH_VERSION}
+ARG COMPUTE_CAP=86
+ARG PYTHON_VERSION=cp312
 
 # Init workspace and clone ComfyUI
 WORKDIR /workspace
@@ -34,6 +27,7 @@ RUN pip install -r requirements.txt
 
 # Install additional dependencies
 RUN pip install huggingface-hub
+RUN pip install https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}${PYTHON_VERSION}-linux_x86_64.whl
 
 # Create directory for ComfyUI (-p to avoid errors if they already exist)
 RUN mkdir -p models/text_encoders models/diffusion_models models/vae
