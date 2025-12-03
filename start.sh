@@ -95,37 +95,33 @@ start_comfyui() {
     echo "ComfyUI started"
 }
 
-# Download model files in parallel
-download_model_files() {
-    echo "-- Downloading model files in parallel --"
+# Download z-image turbo models
+download_z_image_turbo() {
+    echo "-- Downloading z-image turbo models --"
     cd /workspace/ComfyUI
-
-    # Login to Hugging Face if token is provided
-    if [ -n "$HF_TOKEN" ]; then
-        echo "Logging into Hugging Face..."
-        hf auth login --token $HF_TOKEN
-    fi  
 
     TEMP_DIR=$(mktemp -d)
     
-    # Download in parallel
+    # Download Text Encoder model
     hf download Comfy-Org/z_image_turbo \
         split_files/text_encoders/qwen_3_4b.safetensors \
         --local-dir "$TEMP_DIR" &
     PID1=$! 
     
+    # Download z-image turbo model
     hf download Comfy-Org/z_image_turbo \
         split_files/diffusion_models/z_image_turbo_bf16.safetensors \
         --local-dir "$TEMP_DIR" &
     PID2=$! 
     
+    # Download VAE model
     hf download Comfy-Org/z_image_turbo \
         split_files/vae/ae.safetensors \
         --local-dir "$TEMP_DIR" &
     PID3=$! 
 
     # Wait for all downloads
-    echo "Waiting for downloads..."
+    echo "Waiting for z-image turbo downloads..."
     wait $PID1 $PID2 $PID3
     
     # Move to correct locations
@@ -134,6 +130,73 @@ download_model_files() {
     mv "$TEMP_DIR/split_files/vae/ae.safetensors" models/vae/
     
     rm -rf "$TEMP_DIR"
+    
+    echo "z-image turbo downloads completed!"
+}
+
+# Download flux1 dev models
+download_flux1_dev() {
+    echo "-- Downloading flux1 dev models --"
+    cd /workspace/ComfyUI
+
+    # Download CLIP models
+    echo "Starting CLIP downloads..."
+    hf download comfyanonymous/flux_text_encoders clip_l.safetensors --local-dir models/clip/ &
+    PID1=$!
+    hf download comfyanonymous/flux_text_encoders t5xxl_fp8_e4m3fn.safetensors --local-dir models/clip/ &
+    PID2=$!
+
+    # Download Flux model
+    echo "Starting Flux download..."
+    hf download Kijai/flux-fp8 flux1-dev-fp8.safetensors --local-dir models/unet/ &
+    PID3=$!
+
+    # Download VAE
+    echo "Starting VAE download..."
+    hf download Kijai/flux-fp8 flux-vae-bf16.safetensors --local-dir models/vae/ &
+    PID4=$!
+
+    # Wait for all downloads
+    echo "Waiting for flux1 dev downloads..."
+    wait $PID1 $PID2 $PID3 $PID4
+
+    echo "flux1-dev downloads completed!"
+}
+
+# Download model files based on workflow selection
+download_model_files() {
+    echo "-- Downloading model files in parallel --"
+    cd /workspace/ComfyUI
+
+    # Login to Hugging Face if token is provided
+    if [ -n "$HF_TOKEN" ]; then
+        echo "Logging into Hugging Face..."
+        hf auth login --token $HF_TOKEN
+    fi
+
+    # Select workflow based on WORKFLOW environment variable
+    # Default to z-image-turbo if not specified
+    WORKFLOW=${WORKFLOW:-z-image-turbo}
+    
+    echo "Selected workflow: $WORKFLOW"
+
+    case "$WORKFLOW" in
+        z-image-turbo)
+            download_z_image_turbo
+            ;;
+        flux1-dev)
+            download_flux1_dev
+            ;;
+        none)
+            echo "No workflow selected, skipping model downloads."
+            ;;
+        *)
+            echo "Unknown workflow: $WORKFLOW"
+            echo "Available workflows: z-image-turbo, flux1-dev, none"
+            echo "Defaulting to z-image-turbo..."
+            download_z_image_turbo
+            ;;
+    esac
     
     echo "All downloads completed!"
 }

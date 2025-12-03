@@ -33,7 +33,7 @@ RUN pip install huggingface-hub
 RUN pip install https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl
 
 # Create directory for ComfyUI (-p to avoid errors if they already exist)
-RUN mkdir -p models/text_encoders models/diffusion_models models/vae
+RUN mkdir -p models/text_encoders models/diffusion_models models/vae models/clip models/unet 
 
 # Copy start script
 COPY start.sh /start.sh
