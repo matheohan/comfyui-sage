@@ -87,11 +87,42 @@ start_jupyter() {
 #                           ComfyUI Specific Functions                         #
 # ---------------------------------------------------------------------------- #
 
+# Setup comfyUI server
+setup_comfyui() {
+    echo "-- Setting up ComfyUI --"
+    cd /workspace
+
+    if [ ! -d "ComfyUI" ]; then
+        echo "Cloning ComfyUI..."
+        git clone https://github.com/comfyanonymous/ComfyUI.git
+    else
+        echo "Updating ComfyUI..."
+        cd ComfyUI && git pull && cd ..
+    fi
+
+    cd ComfyUI
+
+    if [ ! -d "custom_nodes/ComfyUI-Manager" ]; then
+        echo "Cloning ComfyUI-Manager..."
+        git clone https://github.com/ltdrdata/ComfyUI-Manager.git ./custom_nodes/ComfyUI-Manager
+    else
+        echo "Updating ComfyUI-Manager..."
+        cd custom_nodes/ComfyUI-Manager && git pull && cd ../..
+    fi
+
+    # Create model directories
+    mkdir -p models/{text_encoders,diffusion_models,vae,clip,unet}
+
+    echo "ComfyUI setup completed!"
+}
+
 # Start comfyUI server
 start_comfyui() {
     echo "Starting ComfyUI..."
     cd /workspace/ComfyUI
+
     nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /comfyui.log &
+   
     echo "ComfyUI started"
 }
 
@@ -218,6 +249,7 @@ start_jupyter
 export_env_vars
 
 # ComfyUI specific startup
+setup_comfyui
 start_comfyui
 download_model_files
 

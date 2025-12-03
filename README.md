@@ -1,6 +1,6 @@
 # ComfyUI+Sage RunPod Template
 
-Run the latest ComfyUI on RunPod with Sage.  By default, it installs all the needed models for the z-image turbo model and the default workflow.
+Run the latest ComfyUI on RunPod with Sage. By default, it installs all the needed models for the z-image turbo model.
 
 ## Access
 
@@ -9,6 +9,15 @@ Run the latest ComfyUI on RunPod with Sage.  By default, it installs all the nee
 | 8188 | ComfyUI web UI |
 | 8888 | JupyterLab (token via `JUPYTER_PASSWORD`, root at `/workspace`) |
 | 22 | SSH (set `PUBLIC_KEY` or check logs for generated root password) |
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `WORKFLOW` | Model workflow to download at startup. Options: `z-image-turbo`, `flux1-dev`, `none` | `z-image-turbo` |
+| `HF_TOKEN` | Hugging Face token for authenticated downloads (not required for `z-image-turbo` or `flux1-dev` workflows, but can be provided for gated models) | - |
+| `JUPYTER_PASSWORD` | Password/token for JupyterLab access | - |
+| `PUBLIC_KEY` | SSH public key for authentication | - |
 
 ## Pre-installed Custom Nodes
 
@@ -30,4 +39,4 @@ This project is based on [runpod/containers](https://github.com/runpod/container
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details. 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
