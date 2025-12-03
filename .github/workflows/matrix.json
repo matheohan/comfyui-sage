@@ -1,0 +1,8 @@
+{
+  "cuda_version": ["cu1281"],
+  "torch_version": ["torch280"],
+  "ubuntu_version": ["ubuntu2404"],
+  "sage_version": ["2.2.0"],
+  "compute_cap": [86, 89],
+  "python_version": ["cp312"]
+}

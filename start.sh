@@ -1,0 +1,258 @@
+#!/bin/bash
+set -e # Exit the script if any statement returns a non-true return value
+
+# ---------------------------------------------------------------------------- #
+#                          Function Definitions                                #
+# ---------------------------------------------------------------------------- #
+
+# Start nginx service
+start_nginx() {
+    echo "Starting Nginx service..."
+    service nginx start
+}
+
+# Execute script if exists
+execute_script() {
+    local script_path=$1
+    local script_msg=$2
+    if [[ -f ${script_path} ]]; then
+        echo "${script_msg}"
+        bash ${script_path}
+    fi
+}
+
+# Setup ssh
+setup_ssh() {
+    if [[ $PUBLIC_KEY ]]; then
+        echo "Setting up SSH..."
+        mkdir -p ~/.ssh
+        echo "$PUBLIC_KEY" >> ~/.ssh/authorized_keys
+        chmod 700 -R ~/.ssh
+
+        if [ ! -f /etc/ssh/ssh_host_rsa_key ]; then
+            ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -q -N ''
+            echo "RSA key fingerprint:"
+            ssh-keygen -lf /etc/ssh/ssh_host_rsa_key.pub
+        fi
+
+        if [ ! -f /etc/ssh/ssh_host_dsa_key ]; then
+            ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -q -N ''
+            echo "DSA key fingerprint:"
+            ssh-keygen -lf /etc/ssh/ssh_host_dsa_key.pub
+        fi
+
+        if [ ! -f /etc/ssh/ssh_host_ecdsa_key ]; then
+            ssh-keygen -t ecdsa -f /etc/ssh/ssh_host_ecdsa_key -q -N ''
+            echo "ECDSA key fingerprint:"
+            ssh-keygen -lf /etc/ssh/ssh_host_ecdsa_key.pub
+        fi
+
+        if [ ! -f /etc/ssh/ssh_host_ed25519_key ]; then
+            ssh-keygen -t ed25519 -f /etc/ssh/ssh_host_ed25519_key -q -N ''
+            echo "ED25519 key fingerprint:"
+            ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
+        fi
+
+        service ssh start
+
+        echo "SSH host keys:"
+        for key in /etc/ssh/*.pub; do
+            echo "Key: $key"
+            ssh-keygen -lf $key
+        done
+    fi
+}
+
+# Export env vars
+export_env_vars() {
+    echo "Exporting environment variables..."
+    printenv | grep -E '^[A-Z_][A-Z0-9_]*=' | grep -v '^PUBLIC_KEY' | awk -F = '{ val = $0; sub(/^[^=]*=/, "", val); print "export " $1 "=\"" val "\"" }' > /etc/rp_environment
+    if ! grep -q 'source /etc/rp_environment' ~/.bashrc; then
+        echo 'source /etc/rp_environment' >> ~/.bashrc
+    fi
+}
+
+# Start jupyter lab
+start_jupyter() {
+    if [[ $JUPYTER_PASSWORD ]]; then
+        echo "Starting Jupyter Lab..."
+        mkdir -p /workspace &&
+            cd / &&
+            nohup python3 -m jupyter lab --allow-root --no-browser --port=8888 --ip=* --FileContentsManager.delete_to_trash=False --ServerApp.terminado_settings='{"shell_command":["/bin/bash"]}' --IdentityProvider.token=$JUPYTER_PASSWORD --ServerApp.allow_origin=* --ServerApp.preferred_dir=/workspace &> /jupyter.log &
+        echo "Jupyter Lab started"
+    fi
+}
+
+# ---------------------------------------------------------------------------- #
+#                           ComfyUI Specific Functions                         #
+# ---------------------------------------------------------------------------- #
+
+# Setup comfyUI server
+setup_comfyui() {
+    echo "-- Setting up ComfyUI --"
+    cd /workspace
+
+    if [ ! -d "ComfyUI" ]; then
+        echo "Cloning ComfyUI..."
+        git clone https://github.com/comfyanonymous/ComfyUI.git
+    else
+        echo "Updating ComfyUI..."
+        cd ComfyUI && git pull && cd ..
+    fi
+
+    cd ComfyUI
+
+    if [ ! -d "custom_nodes/ComfyUI-Manager" ]; then
+        echo "Cloning ComfyUI-Manager..."
+        git clone https://github.com/ltdrdata/ComfyUI-Manager.git ./custom_nodes/ComfyUI-Manager
+    else
+        echo "Updating ComfyUI-Manager..."
+        cd custom_nodes/ComfyUI-Manager && git pull && cd ../..
+    fi
+
+    # Create model directories
+    mkdir -p models/{text_encoders,diffusion_models,vae,clip,unet}
+
+    echo "ComfyUI setup completed!"
+}
+
+# Start comfyUI server
+start_comfyui() {
+    echo "Starting ComfyUI..."
+    cd /workspace/ComfyUI
+
+    nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /comfyui.log &
+   
+    echo "ComfyUI started"
+}
+
+# Download z-image turbo models
+download_z_image_turbo() {
+    echo "-- Downloading z-image turbo models --"
+    cd /workspace/ComfyUI
+
+    TEMP_DIR=$(mktemp -d)
+    
+    # Download Text Encoder model
+    hf download Comfy-Org/z_image_turbo \
+        split_files/text_encoders/qwen_3_4b.safetensors \
+        --local-dir "$TEMP_DIR" &
+    PID1=$! 
+    
+    # Download z-image turbo model
+    hf download Comfy-Org/z_image_turbo \
+        split_files/diffusion_models/z_image_turbo_bf16.safetensors \
+        --local-dir "$TEMP_DIR" &
+    PID2=$! 
+    
+    # Download VAE model
+    hf download Comfy-Org/z_image_turbo \
+        split_files/vae/ae.safetensors \
+        --local-dir "$TEMP_DIR" &
+    PID3=$! 
+
+    # Wait for all downloads
+    echo "Waiting for z-image turbo downloads..."
+    wait $PID1 $PID2 $PID3
+    
+    # Move to correct locations
+    mv "$TEMP_DIR/split_files/text_encoders/qwen_3_4b.safetensors" models/text_encoders/
+    mv "$TEMP_DIR/split_files/diffusion_models/z_image_turbo_bf16.safetensors" models/diffusion_models/
+    mv "$TEMP_DIR/split_files/vae/ae.safetensors" models/vae/
+    
+    rm -rf "$TEMP_DIR"
+    
+    echo "z-image turbo downloads completed!"
+}
+
+# Download flux1 dev models
+download_flux1_dev() {
+    echo "-- Downloading flux1 dev models --"
+    cd /workspace/ComfyUI
+
+    # Download CLIP models
+    echo "Starting CLIP downloads..."
+    hf download comfyanonymous/flux_text_encoders clip_l.safetensors --local-dir models/clip/ &
+    PID1=$!
+    hf download comfyanonymous/flux_text_encoders t5xxl_fp8_e4m3fn.safetensors --local-dir models/clip/ &
+    PID2=$!
+
+    # Download Flux model
+    echo "Starting Flux download..."
+    hf download Kijai/flux-fp8 flux1-dev-fp8.safetensors --local-dir models/unet/ &
+    PID3=$!
+
+    # Download VAE
+    echo "Starting VAE download..."
+    hf download Kijai/flux-fp8 flux-vae-bf16.safetensors --local-dir models/vae/ &
+    PID4=$!
+
+    # Wait for all downloads
+    echo "Waiting for flux1 dev downloads..."
+    wait $PID1 $PID2 $PID3 $PID4
+
+    echo "flux1-dev downloads completed!"
+}
+
+# Download model files based on workflow selection
+download_model_files() {
+    echo "-- Downloading model files in parallel --"
+    cd /workspace/ComfyUI
+
+    # Login to Hugging Face if token is provided
+    if [ -n "$HF_TOKEN" ]; then
+        echo "Logging into Hugging Face..."
+        hf auth login --token $HF_TOKEN
+    fi
+
+    # Select workflow based on WORKFLOW environment variable
+    # Default to z-image-turbo if not specified
+    WORKFLOW=${WORKFLOW:-z-image-turbo}
+    
+    echo "Selected workflow: $WORKFLOW"
+
+    case "$WORKFLOW" in
+        z-image-turbo)
+            download_z_image_turbo
+            ;;
+        flux1-dev)
+            download_flux1_dev
+            ;;
+        none)
+            echo "No workflow selected, skipping model downloads."
+            ;;
+        *)
+            echo "Unknown workflow: $WORKFLOW"
+            echo "Available workflows: z-image-turbo, flux1-dev, none"
+            echo "Defaulting to z-image-turbo..."
+            download_z_image_turbo
+            ;;
+    esac
+    
+    echo "All downloads completed!"
+}
+
+
+# ---------------------------------------------------------------------------- #
+#                               Main Program                                   #
+# ---------------------------------------------------------------------------- #
+
+start_nginx
+
+execute_script "/pre_start.sh" "Running pre-start script..."
+
+echo "Pod Started"
+
+# Default startup
+setup_ssh
+start_jupyter
+export_env_vars
+
+# ComfyUI specific startup
+setup_comfyui
+start_comfyui
+download_model_files
+
+echo "Start script(s) finished, Pod is ready to use."
+
+sleep infinity

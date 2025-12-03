@@ -1,0 +1,59 @@
+name: Create GitHub Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Generate image list from matrix
+        id: images
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          OWNER="${{ github.repository_owner }}"
+          MATRIX_FILE=".github/workflows/matrix.json"
+          
+          IMAGES=""
+          
+          # Loop through all combinations
+          for cuda in $(jq -r '.cuda_version[]' "$MATRIX_FILE"); do
+            for torch in $(jq -r '.torch_version[]' "$MATRIX_FILE"); do
+              for sage in $(jq -r '.sage_version[]' "$MATRIX_FILE"); do
+                for cc in $(jq -r '.compute_cap[]' "$MATRIX_FILE"); do
+                  for python in $(jq -r '.python_version[]' "$MATRIX_FILE"); do
+                    IMAGES="${IMAGES}- \`ghcr.io/${OWNER}/comfyui-sage:${VERSION}-${cuda}-${torch}-sage${sage}-cc${cc}-${python}\`\n"
+                  done
+                done
+              done
+            done
+          done
+          
+          echo "list<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$IMAGES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: v${{ steps.version.outputs.version }}
+          body: |
+            ## Docker Images
+            
+            ${{ steps.images.outputs.list }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

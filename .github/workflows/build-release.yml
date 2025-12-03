@@ -1,0 +1,87 @@
+name: Build Release Images
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+'
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  load-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Load matrix
+        id: set-matrix
+        run: echo "matrix=$(cat .github/workflows/matrix.json | jq -c)" >> $GITHUB_OUTPUT
+
+  build:
+    needs: load-matrix
+    runs-on: ubuntu-latest
+
+    # Matrix strategy - creates multiple parallel jobs
+    # 2 compute_cap values = 2 Docker images built in parallel
+    strategy:
+      matrix: ${{ fromJson(needs.load-matrix.outputs.matrix) }}
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      # Checkout repository code
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      # Free up disk space for large Docker builds
+      - name: Free disk space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf /opt/hostedtoolcache/CodeQL
+
+      # Buildx enables caching
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # Log in to push images after build
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Extract version number from tag and set as output
+      # Converts "refs/tags/v1.0.0" → "1.0.0"
+      - name: Extract version from tag
+        id: version
+        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      # Build Dockerfile and push to registry (use buildx instead of docker build)
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          build-args: |
+            CUDA_VERSION=${{ matrix.cuda_version }}
+            TORCH_VERSION=${{ matrix.torch_version }}
+            UBUNTU_VERSION=${{ matrix.ubuntu_version }}
+            SAGE_ATTENTION_VERSION=${{ matrix.sage_version }}
+            COMPUTE_CAP=${{ matrix.compute_cap }}
+            PYTHON_VERSION=${{ matrix.python_version }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:${{ steps.version.outputs.version }}-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix.sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}
+          
+          # Cache layers from GitHub Actions cache
+          cache-from: type=gha
+          # Save all layers to cache for future builds
+          cache-to: type=gha,mode=max
