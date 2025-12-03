@@ -128,13 +128,13 @@ setup_comfyui() {
     if [ ! -d "custom_nodes/SeedVarianceEnhancer" ]; then
         echo "-- Get SeedVarianceEnhancer --"
         wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
-        unzip seed_variance_enhancer.zip -d custom_nodes/SeedVarianceEnhancer && \
+        unzip seed_variance_enhancer.zip -d custom_nodes && \
         rm seed_variance_enhancer.zip
     else
         echo "-- Updating SeedVarianceEnhancer --"
         wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
         rm -rf custom_nodes/SeedVarianceEnhancer && \
-        unzip seed_variance_enhancer.zip -d custom_nodes/SeedVarianceEnhancer && \
+        unzip seed_variance_enhancer.zip -d custom_nodes && \
         rm seed_variance_enhancer.zip
     fi
 
