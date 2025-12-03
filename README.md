@@ -29,6 +29,12 @@ Run the latest ComfyUI on RunPod with Sage. By default, it installs all the need
 |------|-------------|
 | `/workspace/ComfyUI` | ComfyUI installation |
 
+## Support This Project
+
+If you like my work and don't have a RunPod account yet, feel free to use my referral link when signing up! Both you and I will receive a **$5 credit bonus** when you add your first $10. This helps me build more wheels and improve compatibility for different GPU architectures.
+
+[**Sign up on RunPod and get $5 credit**](https://runpod.io?ref=iu7x7ufv)
+
 ## Source Code
 
 This is an open source template. Source code available at: [matheohan/comfyui-sage](https://github.com/matheohan/comfyui-sage)
