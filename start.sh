@@ -95,6 +95,7 @@ setup_comfyui() {
     echo "-- Setting up ComfyUI --"
     cd /workspace
 
+    # Clone or update ComfyUI repo
     if [ ! -d "ComfyUI" ]; then
         echo "-- Cloning ComfyUI --"
         git clone https://github.com/comfyanonymous/ComfyUI.git
@@ -105,12 +106,51 @@ setup_comfyui() {
 
     cd ComfyUI
 
+    # Clone or update ComfyUI-Manager repo
     if [ ! -d "custom_nodes/ComfyUI-Manager" ]; then
         echo "-- Cloning ComfyUI-Manager --"
         git clone https://github.com/ltdrdata/ComfyUI-Manager.git ./custom_nodes/ComfyUI-Manager
     else
         echo "-- Updating ComfyUI-Manager --"
         cd custom_nodes/ComfyUI-Manager && git pull && cd ../..
+    fi
+
+    # Clone or update RGThree-ComfyUI repo
+    if [ ! -d "custom_nodes/RGThree-ComfyUI" ]; then
+        echo "-- Cloning RGThree-ComfyUI --"
+        git clone https://github.com/rgthree/rgthree-comfy.git ./custom_nodes/RGThree-ComfyUI
+    else
+        echo "-- Updating RGThree-ComfyUI --"
+        cd custom_nodes/RGThree-ComfyUI && git pull && cd ../..
+    fi
+
+    # Get SeedVarianceEnhancer repo
+    if [ ! -d "custom_nodes/SeedVarianceEnhancer" ]; then
+        echo "-- Get SeedVarianceEnhancer --"
+        wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
+        unzip seed_variance_enhancer.zip -d custom_nodes/SeedVarianceEnhancer && \
+        rm seed_variance_enhancer.zip
+    else
+        echo "-- Updating SeedVarianceEnhancer --"
+        wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
+        rm -rf custom_nodes/SeedVarianceEnhancer && \
+        unzip seed_variance_enhancer.zip -d custom_nodes/SeedVarianceEnhancer && \
+        rm seed_variance_enhancer.zip
+    fi
+
+    # Add custom ComfyUI workflows 
+    mkdir -p ./user/default/workflows
+    if [ ! -f "./user/default/workflows/flux_dev_example.json" ]; then
+        echo "-- Get default flux workflow --"
+        wget -P ./user/default/workflows/ https://github.com/matheohan/ComfyUI-Sage-Runpod/releases/download/workflow/flux_dev_example.json
+    else
+        echo "-- Default flux workflow already exist, skipping... --"
+    fi
+    if [ ! -f "./user/default/workflows/z_image_turbo_example.json" ]; then
+        echo "-- Get default z-image-turbo workflow --"
+        wget -P ./user/default/workflows/ https://github.com/matheohan/ComfyUI-Sage-Runpod/releases/download/workflow/z_image_turbo_example.json
+    else
+        echo "-- Default z-image-turbo workflow already exist, skipping... --"
     fi
 
     # Create model directories
@@ -125,10 +165,10 @@ start_comfyui() {
     cd /workspace/ComfyUI
 
     if [ -n "$DISABLE_SAGE" ] && [ "$DISABLE_SAGE" == "true" ]; then
-        nohup python main.py --fast fp16_accumulation --listen 0.0.0.0 &> /comfyui.log &
+        nohup python main.py --fast fp16_accumulation --listen 0.0.0.0 &> /workspace/comfyui.log &
         echo "-- Sage Attention is disabled --"
     else
-        nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /comfyui.log &
+        nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /workspace/comfyui.log &
     fi
    
     echo "-- ComfyUI started --"
