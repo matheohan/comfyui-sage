@@ -10,19 +10,25 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  load-matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Load matrix
+        id: set-matrix
+        run: echo "matrix=$(cat .github/workflows/matrix.json | jq -c)" >> $GITHUB_OUTPUT
+
   build:
+    needs: load-matrix
     runs-on: ubuntu-latest
 
     # Matrix strategy - creates multiple parallel jobs
     # 2 compute_cap values = 2 Docker images built in parallel
     strategy:
-      matrix:
-        cuda_version: [cu1281]
-        torch_version: [torch280]
-        ubuntu_version: [ubuntu2404]
-        sage_version: [2.2.0]
-        compute_cap: [86, 89]
-        python_version: [cp312]
+      matrix: ${{ fromJson(needs.load-matrix.outputs.matrix) }}
 
     permissions:
       contents: read
