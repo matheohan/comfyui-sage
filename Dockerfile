@@ -37,7 +37,7 @@ COPY --from=builder /build/ComfyUI-Manager/requirements.txt /tmp/manager-require
 RUN pip --no-cache-dir install -r comfyui-requirements.txt && \
     pip --no-cache-dir install -r manager-requirements.txt && \
     pip --no-cache-dir install huggingface-hub && \
-    pip --no-cache-dir install https://github.com/matheohan/comfyui-sage/releases/download/latest/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl && \
+    pip --no-cache-dir install https://github.com/matheohan/comfyui-sage/releases/download/sage/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl && \
     rm -rf /tmp/*.txt /root/.cache/pip
 
 # Copy start script
