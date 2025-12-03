@@ -121,7 +121,11 @@ start_comfyui() {
     echo "Starting ComfyUI..."
     cd /workspace/ComfyUI
 
-    nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /comfyui.log &
+    if [ -n "$DISABLE_SAGE" ] && [ "$DISABLE_SAGE" == "true" ]; then
+        nohup python main.py --fast fp16_accumulation --listen 0.0.0.0 &> /comfyui.log &
+    else
+        nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /comfyui.log &
+    fi
    
     echo "ComfyUI started"
 }
@@ -132,33 +136,51 @@ download_z_image_turbo() {
     cd /workspace/ComfyUI
 
     TEMP_DIR=$(mktemp -d)
+    PIDS=()
     
-    # Download Text Encoder model
-    hf download Comfy-Org/z_image_turbo \
-        split_files/text_encoders/qwen_3_4b.safetensors \
-        --local-dir "$TEMP_DIR" &
-    PID1=$! 
+    # Download Text Encoder model if not exists
+    if [[ ! -f "models/text_encoders/qwen_3_4b.safetensors" ]]; then
+        hf download Comfy-Org/z_image_turbo \
+            split_files/text_encoders/qwen_3_4b.safetensors \
+            --local-dir "$TEMP_DIR" &
+        PIDS+=($!)
+    else
+        echo "Text encoder already exists, skipping..."
+    fi
     
-    # Download z-image turbo model
-    hf download Comfy-Org/z_image_turbo \
-        split_files/diffusion_models/z_image_turbo_bf16.safetensors \
-        --local-dir "$TEMP_DIR" &
-    PID2=$! 
+    # Download z-image turbo model if not exists
+    if [[ ! -f "models/diffusion_models/z_image_turbo_bf16.safetensors" ]]; then
+        hf download Comfy-Org/z_image_turbo \
+            split_files/diffusion_models/z_image_turbo_bf16.safetensors \
+            --local-dir "$TEMP_DIR" &
+        PIDS+=($!)
+    else
+        echo "Diffusion model already exists, skipping..."
+    fi
     
-    # Download VAE model
-    hf download Comfy-Org/z_image_turbo \
-        split_files/vae/ae.safetensors \
-        --local-dir "$TEMP_DIR" &
-    PID3=$! 
+    # Download VAE model if not exists
+    if [[ ! -f "models/vae/ae.safetensors" ]]; then
+        hf download Comfy-Org/z_image_turbo \
+            split_files/vae/ae.safetensors \
+            --local-dir "$TEMP_DIR" &
+        PIDS+=($!)
+    else
+        echo "VAE already exists, skipping..."
+    fi
 
-    # Wait for all downloads
-    echo "Waiting for z-image turbo downloads..."
-    wait $PID1 $PID2 $PID3
-    
-    # Move to correct locations
-    mv "$TEMP_DIR/split_files/text_encoders/qwen_3_4b.safetensors" models/text_encoders/
-    mv "$TEMP_DIR/split_files/diffusion_models/z_image_turbo_bf16.safetensors" models/diffusion_models/
-    mv "$TEMP_DIR/split_files/vae/ae.safetensors" models/vae/
+    # Wait for all downloads if any
+    if [[ ${#PIDS[@]} -gt 0 ]]; then
+        echo "Waiting for z-image turbo downloads..."
+        wait "${PIDS[@]}"
+        
+        # Move downloaded files to correct locations
+        [[ -f "$TEMP_DIR/split_files/text_encoders/qwen_3_4b.safetensors" ]] && \
+            mv "$TEMP_DIR/split_files/text_encoders/qwen_3_4b.safetensors" models/text_encoders/
+        [[ -f "$TEMP_DIR/split_files/diffusion_models/z_image_turbo_bf16.safetensors" ]] && \
+            mv "$TEMP_DIR/split_files/diffusion_models/z_image_turbo_bf16.safetensors" models/diffusion_models/
+        [[ -f "$TEMP_DIR/split_files/vae/ae.safetensors" ]] && \
+            mv "$TEMP_DIR/split_files/vae/ae.safetensors" models/vae/
+    fi
     
     rm -rf "$TEMP_DIR"
     
@@ -170,26 +192,44 @@ download_flux1_dev() {
     echo "-- Downloading flux1 dev models --"
     cd /workspace/ComfyUI
 
-    # Download CLIP models
-    echo "Starting CLIP downloads..."
-    hf download comfyanonymous/flux_text_encoders clip_l.safetensors --local-dir models/clip/ &
-    PID1=$!
-    hf download comfyanonymous/flux_text_encoders t5xxl_fp8_e4m3fn.safetensors --local-dir models/clip/ &
-    PID2=$!
+    PIDS=()
 
-    # Download Flux model
-    echo "Starting Flux download..."
-    hf download Kijai/flux-fp8 flux1-dev-fp8.safetensors --local-dir models/unet/ &
-    PID3=$!
+    # Download CLIP models if not exists
+    if [[ ! -f "models/clip/clip_l.safetensors" ]]; then
+        hf download comfyanonymous/flux_text_encoders clip_l.safetensors --local-dir models/clip/ &
+        PIDS+=($!)
+    else
+        echo "CLIP L already exists, skipping..."
+    fi
 
-    # Download VAE
-    echo "Starting VAE download..."
-    hf download Kijai/flux-fp8 flux-vae-bf16.safetensors --local-dir models/vae/ &
-    PID4=$!
+    if [[ ! -f "models/clip/t5xxl_fp8_e4m3fn.safetensors" ]]; then
+        hf download comfyanonymous/flux_text_encoders t5xxl_fp8_e4m3fn.safetensors --local-dir models/clip/ &
+        PIDS+=($!)
+    else
+        echo "T5XXL already exists, skipping..."
+    fi
 
-    # Wait for all downloads
-    echo "Waiting for flux1 dev downloads..."
-    wait $PID1 $PID2 $PID3 $PID4
+    # Download Flux model if not exists
+    if [[ ! -f "models/unet/flux1-dev-fp8.safetensors" ]]; then
+        hf download Kijai/flux-fp8 flux1-dev-fp8.safetensors --local-dir models/unet/ &
+        PIDS+=($!)
+    else
+        echo "Flux model already exists, skipping..."
+    fi
+
+    # Download VAE if not exists
+    if [[ ! -f "models/vae/flux-vae-bf16.safetensors" ]]; then
+        hf download Kijai/flux-fp8 flux-vae-bf16.safetensors --local-dir models/vae/ &
+        PIDS+=($!)
+    else
+        echo "Flux VAE already exists, skipping..."
+    fi
+
+    # Wait for all downloads if any
+    if [[ ${#PIDS[@]} -gt 0 ]]; then
+        echo "Waiting for flux1 dev downloads..."
+        wait "${PIDS[@]}"
+    fi
 
     echo "flux1-dev downloads completed!"
 }
