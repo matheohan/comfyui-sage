@@ -7,8 +7,9 @@ set -e # Exit the script if any statement returns a non-true return value
 
 # Start nginx service
 start_nginx() {
-    echo "Starting Nginx service..."
+    echo "-- Starting Nginx service --"
     service nginx start
+    echo "-- Nginx service started --"
 }
 
 # Execute script if exists
@@ -24,7 +25,7 @@ execute_script() {
 # Setup ssh
 setup_ssh() {
     if [[ $PUBLIC_KEY ]]; then
-        echo "Setting up SSH..."
+        echo "-- Setting up SSH --"
         mkdir -p ~/.ssh
         echo "$PUBLIC_KEY" >> ~/.ssh/authorized_keys
         chmod 700 -R ~/.ssh
@@ -53,19 +54,21 @@ setup_ssh() {
             ssh-keygen -lf /etc/ssh/ssh_host_ed25519_key.pub
         fi
 
-        service ssh start
-
-        echo "SSH host keys:"
+        echo "-- SSH host keys --"
         for key in /etc/ssh/*.pub; do
             echo "Key: $key"
             ssh-keygen -lf $key
         done
+
+        echo "-- Starting SSH service --"
+        service ssh start
+        echo "-- SSH service started --"
     fi
 }
 
 # Export env vars
 export_env_vars() {
-    echo "Exporting environment variables..."
+    echo "-- Exporting environment variables --"
     printenv | grep -E '^[A-Z_][A-Z0-9_]*=' | grep -v '^PUBLIC_KEY' | awk -F = '{ val = $0; sub(/^[^=]*=/, "", val); print "export " $1 "=\"" val "\"" }' > /etc/rp_environment
     if ! grep -q 'source /etc/rp_environment' ~/.bashrc; then
         echo 'source /etc/rp_environment' >> ~/.bashrc
@@ -75,11 +78,11 @@ export_env_vars() {
 # Start jupyter lab
 start_jupyter() {
     if [[ $JUPYTER_PASSWORD ]]; then
-        echo "Starting Jupyter Lab..."
+        echo "-- Starting Jupyter Lab --"
         mkdir -p /workspace &&
             cd / &&
             nohup python3 -m jupyter lab --allow-root --no-browser --port=8888 --ip=* --FileContentsManager.delete_to_trash=False --ServerApp.terminado_settings='{"shell_command":["/bin/bash"]}' --IdentityProvider.token=$JUPYTER_PASSWORD --ServerApp.allow_origin=* --ServerApp.preferred_dir=/workspace &> /jupyter.log &
-        echo "Jupyter Lab started"
+        echo "-- Jupyter Lab started --"
     fi
 }
 
@@ -93,41 +96,42 @@ setup_comfyui() {
     cd /workspace
 
     if [ ! -d "ComfyUI" ]; then
-        echo "Cloning ComfyUI..."
+        echo "-- Cloning ComfyUI --"
         git clone https://github.com/comfyanonymous/ComfyUI.git
     else
-        echo "Updating ComfyUI..."
+        echo "-- Updating ComfyUI --"
         cd ComfyUI && git pull && cd ..
     fi
 
     cd ComfyUI
 
     if [ ! -d "custom_nodes/ComfyUI-Manager" ]; then
-        echo "Cloning ComfyUI-Manager..."
+        echo "-- Cloning ComfyUI-Manager --"
         git clone https://github.com/ltdrdata/ComfyUI-Manager.git ./custom_nodes/ComfyUI-Manager
     else
-        echo "Updating ComfyUI-Manager..."
+        echo "-- Updating ComfyUI-Manager --"
         cd custom_nodes/ComfyUI-Manager && git pull && cd ../..
     fi
 
     # Create model directories
     mkdir -p models/{text_encoders,diffusion_models,vae,clip,unet}
 
-    echo "ComfyUI setup completed!"
+    echo "-- ComfyUI setup completed! --"
 }
 
 # Start comfyUI server
 start_comfyui() {
-    echo "Starting ComfyUI..."
+    echo "-- Starting ComfyUI --"
     cd /workspace/ComfyUI
 
     if [ -n "$DISABLE_SAGE" ] && [ "$DISABLE_SAGE" == "true" ]; then
         nohup python main.py --fast fp16_accumulation --listen 0.0.0.0 &> /comfyui.log &
+        echo "-- Sage Attention is disabled --"
     else
         nohup python main.py --fast fp16_accumulation --use-sage-attention --listen 0.0.0.0 &> /comfyui.log &
     fi
    
-    echo "ComfyUI started"
+    echo "-- ComfyUI started --"
 }
 
 # Download z-image turbo models
@@ -184,7 +188,7 @@ download_z_image_turbo() {
     
     rm -rf "$TEMP_DIR"
     
-    echo "z-image turbo downloads completed!"
+    echo "-- z-image turbo downloads completed! --"
 }
 
 # Download flux1 dev models
@@ -231,7 +235,7 @@ download_flux1_dev() {
         wait "${PIDS[@]}"
     fi
 
-    echo "flux1-dev downloads completed!"
+    echo "-- flux1-dev downloads completed! --"
 }
 
 # Download model files based on workflow selection
@@ -269,7 +273,7 @@ download_model_files() {
             ;;
     esac
     
-    echo "All downloads completed!"
+    echo "-- All downloads completed! --"
 }
 
 
@@ -281,7 +285,7 @@ start_nginx
 
 execute_script "/pre_start.sh" "Running pre-start script..."
 
-echo "Pod Started"
+echo "> Pod Started <"
 
 # Default startup
 setup_ssh
@@ -293,6 +297,6 @@ setup_comfyui
 start_comfyui
 download_model_files
 
-echo "Start script(s) finished, Pod is ready to use."
+echo "> Start script finished, Pod is ready to use. <"
 
 sleep infinity
