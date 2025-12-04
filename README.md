@@ -1,6 +1,6 @@
-# ComfyUI+Sage RunPod Template
+# ComfyUI+SageAttention RunPod Template
 
-Run the latest ComfyUI on RunPod with Sage. By default, it installs all the needed models for the z-image turbo model.
+Run the latest ComfyUI on RunPod with SageAttention. By default, it installs all the needed models for the z-image turbo model.
 
 ## Access
 
@@ -15,6 +15,7 @@ Run the latest ComfyUI on RunPod with Sage. By default, it installs all the need
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `WORKFLOW` | Model workflow to download at startup. Options: `z-image-turbo`, `flux1-dev`, `none` | `z-image-turbo` |
+| `DISABLE_SAGE` | Set to `true` to disable SageAttention and run ComfyUI without it | false |
 | `HF_TOKEN` | Hugging Face token for authenticated downloads (not required for `z-image-turbo` or `flux1-dev` workflows, but can be provided for gated models) | - |
 | `JUPYTER_PASSWORD` | Password/token for JupyterLab access | - |
 | `PUBLIC_KEY` | SSH public key for authentication | - |
@@ -22,16 +23,30 @@ Run the latest ComfyUI on RunPod with Sage. By default, it installs all the need
 ## Pre-installed Custom Nodes
 
 - [ComfyUI-Manager](https://github.com/ltdrdata/ComfyUI-Manager)
+- [RGThree-ComfyUI](https://github.com/rgthree/rgthree-comfy)
+- [SeedVarianceEnhancer](https://civitai.com/models/2184867)
+
+## Default Workflows
+
+Two example workflows are pre-installed and ready to use:
+
+| Workflow | File |
+|----------|------|
+| Flux Dev | `flux_dev_example.json` |
+| Z-Image Turbo | `z_image_turbo_example.json` |
+
+These workflows are located in `/workspace/ComfyUI/user/default/workflows/` and will appear in the ComfyUI workflow browser.
 
 ## Directory Structure
 
 | Path | Description |
 |------|-------------|
 | `/workspace/ComfyUI` | ComfyUI installation |
+| `/workspace/comfyui.log` | ComfyUI log file |
 
 ## Support This Project
 
-If you like my work and don't have a RunPod account yet, feel free to use my referral link when signing up! Both you and I will receive a **$5 credit bonus** when you add your first $10. This helps me build more wheels and improve compatibility for different GPU architectures.
+If you like my work and don't have a RunPod account yet, feel free to use my referral link when signing up! Both you and I will receive a (minimum) **$5 credit bonus** when you add your first $10. This helps me build more wheels and improve compatibility for different GPU architectures.
 
 [**Sign up on RunPod and get $5 credit**](https://runpod.io?ref=iu7x7ufv)
 
