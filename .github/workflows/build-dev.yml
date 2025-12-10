@@ -58,11 +58,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Extract version number from tag and set as output
-      # Converts "refs/tags/1.0.0" → "1.0.0"
+      # Extract feature's name from branch
+      # // means replace all occurrences and the "\" escapes the "/" to let know bash it's a character, not a separator
+      # ${variable//pattern/replacement}
       - name: Extract feature's name from branch
         id: name
-        run: echo "name=${GITHUB_REF#refs/heads/}" >> $GITHUB_OUTPUT
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          SANITIZED_NAME="${BRANCH_NAME//\//-}"
+          echo "name=${SANITIZED_NAME}" >> $GITHUB_OUTPUT
 
       # Build Dockerfile and push to registry (use buildx instead of docker build)
       - name: Build and push Docker image
