@@ -2,8 +2,10 @@ name: Build Dev Images
 
 on:
   push:
-    tags:
-      - 'dev-[0-9]+.[0-9]+.[0-9]+'
+    branches:
+      - feat/**
+      - fix/**
+      - hotfix/**
 
 env:
   REGISTRY: ghcr.io
@@ -56,11 +58,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # Extract version number from tag and set as output
-      # Converts "refs/tags/1.0.0" → "1.0.0"
-      - name: Extract version from tag
-        id: version
-        run: echo "version=${GITHUB_REF#refs/tags/dev-}" >> $GITHUB_OUTPUT
+      # Extract feature's name from branch
+      # // means replace all occurrences and the "\" escapes the "/" to let know bash it's a character, not a separator
+      # ${variable//pattern/replacement}
+      - name: Extract feature's name from branch
+        id: name
+        run: |
+          BRANCH_NAME="${GITHUB_REF#refs/heads/}"
+          SANITIZED_NAME="${BRANCH_NAME//\//-}"
+          echo "name=${SANITIZED_NAME}" >> $GITHUB_OUTPUT
 
       # Build Dockerfile and push to registry (use buildx instead of docker build)
       - name: Build and push Docker image
@@ -76,7 +82,7 @@ jobs:
             COMPUTE_CAP=${{ matrix.compute_cap }}
             PYTHON_VERSION=${{ matrix.python_version }}
           tags: |
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:dev-${{ steps.version.outputs.version }}-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix.sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:dev-${{ steps.name.outputs.name }}-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix.sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}
           
           # Cache layers from GitHub Actions cache
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:cache-${{ matrix.cuda_version }}-cc${{ matrix.compute_cap }}
