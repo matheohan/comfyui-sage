@@ -77,7 +77,7 @@ jobs:
             PYTHON_VERSION=${{ matrix.python_version }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:${{ steps.version.outputs.version }}-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix.sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}
-            ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:latest-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix. sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}
+            ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:latest-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix.sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}
           # Cache layers from GitHub Actions cache
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:cache-${{ matrix.cuda_version }}-cc${{ matrix.compute_cap }}
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:cache-${{ matrix.cuda_version }}-cc${{ matrix.compute_cap }},mode=max
