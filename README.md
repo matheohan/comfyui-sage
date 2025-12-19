@@ -16,6 +16,7 @@ Run the latest ComfyUI on RunPod with SageAttention. By default, it installs all
 |----------|-------------|---------|
 | `WORKFLOW` | Model workflow to download at startup. Options: `z-image-turbo`, `flux1-dev`, `none` | `z-image-turbo` |
 | `DISABLE_SAGE` | Set to `true` to disable SageAttention and run ComfyUI without it | false |
+| `DISABLE_CUSTOM` | Set to `true` to disable installation of default custom nodes | false |
 | `HF_TOKEN` | Hugging Face token for authenticated downloads (not required for `z-image-turbo` or `flux1-dev` workflows, but can be provided for gated models) | - |
 | `JUPYTER_PASSWORD` | Password/token for JupyterLab access | - |
 | `PUBLIC_KEY` | SSH public key for authentication | - |

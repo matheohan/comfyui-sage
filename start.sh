@@ -106,36 +106,40 @@ setup_comfyui() {
 
     cd ComfyUI
 
-    # Clone or update ComfyUI-Manager repo
-    if [ ! -d "custom_nodes/ComfyUI-Manager" ]; then
-        echo "-- Cloning ComfyUI-Manager --"
-        git clone https://github.com/ltdrdata/ComfyUI-Manager.git ./custom_nodes/ComfyUI-Manager
+    if [ -n "$DISABLE_CUSTOM" ] && [ "$DISABLE_CUSTOM" == "true" ]; then
+        echo "-- Custom nodes disabled, skipping ComfyUI custom nodes setup... --"
     else
-        echo "-- Updating ComfyUI-Manager --"
-        cd custom_nodes/ComfyUI-Manager && git pull && cd ../..
-    fi
+        # Clone or update ComfyUI-Manager repo
+        if [ ! -d "custom_nodes/ComfyUI-Manager" ]; then
+            echo "-- Cloning ComfyUI-Manager --"
+            git clone https://github.com/ltdrdata/ComfyUI-Manager.git ./custom_nodes/ComfyUI-Manager
+        else
+            echo "-- Updating ComfyUI-Manager --"
+            cd custom_nodes/ComfyUI-Manager && git pull && cd ../..
+        fi
 
-    # Clone or update RGThree-ComfyUI repo
-    if [ ! -d "custom_nodes/RGThree-ComfyUI" ]; then
-        echo "-- Cloning RGThree-ComfyUI --"
-        git clone https://github.com/rgthree/rgthree-comfy.git ./custom_nodes/RGThree-ComfyUI
-    else
-        echo "-- Updating RGThree-ComfyUI --"
-        cd custom_nodes/RGThree-ComfyUI && git pull && cd ../..
-    fi
+        # Clone or update RGThree-ComfyUI repo
+        if [ ! -d "custom_nodes/RGThree-ComfyUI" ]; then
+            echo "-- Cloning RGThree-ComfyUI --"
+            git clone https://github.com/rgthree/rgthree-comfy.git ./custom_nodes/RGThree-ComfyUI
+        else
+            echo "-- Updating RGThree-ComfyUI --"
+            cd custom_nodes/RGThree-ComfyUI && git pull && cd ../..
+        fi
 
-    # Get SeedVarianceEnhancer repo
-    if [ ! -d "custom_nodes/SeedVarianceEnhancer" ]; then
-        echo "-- Get SeedVarianceEnhancer --"
-        wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
-        unzip seed_variance_enhancer.zip -d custom_nodes && \
-        rm seed_variance_enhancer.zip
-    else
-        echo "-- Updating SeedVarianceEnhancer --"
-        wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
-        rm -rf custom_nodes/SeedVarianceEnhancer && \
-        unzip seed_variance_enhancer.zip -d custom_nodes && \
-        rm seed_variance_enhancer.zip
+        # Get SeedVarianceEnhancer repo
+        if [ ! -d "custom_nodes/SeedVarianceEnhancer" ]; then
+            echo "-- Get SeedVarianceEnhancer --"
+            wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
+            unzip seed_variance_enhancer.zip -d custom_nodes && \
+            rm seed_variance_enhancer.zip
+        else
+            echo "-- Updating SeedVarianceEnhancer --"
+            wget https://civitai.com/api/download/models/2460090 -O seed_variance_enhancer.zip && \
+            rm -rf custom_nodes/SeedVarianceEnhancer && \
+            unzip seed_variance_enhancer.zip -d custom_nodes && \
+            rm seed_variance_enhancer.zip
+        fi
     fi
 
     # Add custom ComfyUI workflows 
