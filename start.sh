@@ -95,20 +95,20 @@ setup_comfyui() {
     echo "-- Setting up ComfyUI --"
     cd /workspace
 
+    # Clone or update ComfyUI repo
+    if [ ! -d "ComfyUI" ]; then
+        echo "-- Cloning ComfyUI --"
+        git clone https://github.com/comfyanonymous/ComfyUI.git
+    else
+        echo "-- Updating ComfyUI --"
+        cd ComfyUI && git pull && cd ..
+    fi
+
+    cd ComfyUI
+
     if [ -n "$DISABLE_CUSTOM" ] && [ "$DISABLE_CUSTOM" == "true" ]; then
         echo "-- Custom nodes disabled, skipping ComfyUI custom nodes setup... --"
     else
-        # Clone or update ComfyUI repo
-        if [ ! -d "ComfyUI" ]; then
-            echo "-- Cloning ComfyUI --"
-            git clone https://github.com/comfyanonymous/ComfyUI.git
-        else
-            echo "-- Updating ComfyUI --"
-            cd ComfyUI && git pull && cd ..
-        fi
-
-        cd ComfyUI
-
         # Clone or update ComfyUI-Manager repo
         if [ ! -d "custom_nodes/ComfyUI-Manager" ]; then
             echo "-- Cloning ComfyUI-Manager --"
