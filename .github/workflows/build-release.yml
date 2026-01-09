@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - '[0-9]+.[0-9]+.[0-9]+'
+  repository_dispatch:
+    types: [comfyui-deps-updated]
 
 env:
   REGISTRY: ghcr.io
@@ -38,6 +40,9 @@ jobs:
       # Checkout repository code
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
 
       # Free up disk space for large Docker builds
       - name: Free disk space
@@ -58,9 +63,15 @@ jobs:
 
       # Extract version number from tag and set as output
       # Converts "refs/tags/v1.0.0" → "1.0.0"
+      # Otherwise, if it's a comfyui-deps trigger, we run the command "git describe" to get the latest tag on the branch
       - name: Extract version from tag
         id: version
-        run: echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=$(git describe --tags --abbrev=0)" >> $GITHUB_OUTPUT
+          fi
 
       # Build Dockerfile and push to registry (use buildx instead of docker build)
       - name: Build and push Docker image
