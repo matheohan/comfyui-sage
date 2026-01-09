@@ -2,6 +2,12 @@
 
 Run the latest ComfyUI on RunPod with SageAttention. By default, it installs all the needed models for the z-image turbo model.
 
+## Requirements
+
+- **Minimum CUDA Version: 12.8**
+
+When selecting a pod on RunPod, make sure to filter by **CUDA version 12.8 or above**. You can do this by using the "CUDA versions" filter dropdown and selecting `12.8` or higher.
+
 ## Access
 
 | Port | Service |
