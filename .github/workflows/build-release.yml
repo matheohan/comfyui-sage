@@ -86,6 +86,7 @@ jobs:
             SAGE_ATTENTION_VERSION=${{ matrix.sage_version }}
             COMPUTE_CAP=${{ matrix.compute_cap }}
             PYTHON_VERSION=${{ matrix.python_version }}
+            COMFYUI_REQUIREMENTS_SHA=${{ hashFiles('.github/comfyui-requirements-sha.txt') }}
           tags: |
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:${{ steps.version.outputs.version }}-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix.sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}
             ${{ env.REGISTRY }}/${{ github.repository_owner }}/comfyui-sage:latest-${{ matrix.cuda_version }}-${{ matrix.torch_version }}-sage${{ matrix.sage_version }}-cc${{ matrix.compute_cap }}-${{ matrix.python_version }}

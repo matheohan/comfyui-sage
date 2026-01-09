@@ -9,10 +9,14 @@ ARG UBUNTU_VERSION=ubuntu2404
 # =============================================================================
 FROM alpine/git AS builder
 
+# If this ARG change, it would make the building process not use the cache in order to rebuild the deps
+ARG COMFYUI_REQUIREMENTS_SHA=latest
+
 WORKDIR /build
 
-# Clone repos to extract requirements
-RUN git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git && \
+# Clone repos to extract requirements (cache busted by COMFYUI_REQUIREMENTS_SHA)
+RUN echo "ComfyUI requirements SHA: ${COMFYUI_REQUIREMENTS_SHA}" && \
+    git clone --depth 1 https://github.com/comfyanonymous/ComfyUI.git && \
     git clone --depth 1 https://github.com/ltdrdata/ComfyUI-Manager.git
 
 # =============================================================================
@@ -29,15 +33,15 @@ ARG PYTHON_VERSION=cp312
 
 WORKDIR /tmp
 
-# Copy only requirements files from builder
-COPY --from=builder /build/ComfyUI/requirements.txt /tmp/comfyui-requirements.txt
+# Copy manager requirements and install stable dependencies
 COPY --from=builder /build/ComfyUI-Manager/requirements.txt /tmp/manager-requirements.txt
-
-# Install all dependencies
-RUN pip --no-cache-dir install -r comfyui-requirements.txt && \
-    pip --no-cache-dir install -r manager-requirements.txt && \
+RUN pip --no-cache-dir install -r manager-requirements.txt && \
     pip --no-cache-dir install huggingface-hub && \
-    pip --no-cache-dir install https://github.com/matheohan/comfyui-sage/releases/download/sage/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl && \
+    pip --no-cache-dir install https://github.com/matheohan/comfyui-sage/releases/download/sage/sageattention-${SAGE_ATTENTION_VERSION}+${CUDA_VERSION}${TORCH_VERSION}cc${COMPUTE_CAP}-${PYTHON_VERSION}-${PYTHON_VERSION}-linux_x86_64.whl
+
+# Copy and install ComfyUI requirements
+COPY --from=builder /build/ComfyUI/requirements.txt /tmp/comfyui-requirements.txt
+RUN pip --no-cache-dir install -r comfyui-requirements.txt && \
     rm -rf /tmp/*.txt /root/.cache/pip
 
 # Copy start script
