@@ -47,7 +47,10 @@ jobs:
       # Free up disk space for large Docker builds
       - name: Free disk space
         run: |
-          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /usr/local/lib/android &
+          sudo rm -rf /usr/share/dotnet &
+          sudo rm -rf /opt/hostedtoolcache/CodeQL &
+          wait
 
       # Buildx enables caching
       - name: Set up Docker Buildx
