@@ -20,7 +20,7 @@ When selecting a pod on RunPod, make sure to filter by **CUDA version 12.8 or ab
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WORKFLOW` | Model workflow to download at startup. Options: `z-image-turbo`, `flux1-dev`, `none` | `z-image-turbo` |
+| `WORKFLOW` | Model workflow to download at startup. Options: `z-image-turbo`, `flux1-dev`, `z-image`, `none` | `z-image-turbo` |
 | `DISABLE_SAGE` | Set to `true` to disable SageAttention and run ComfyUI without it | false |
 | `DISABLE_CUSTOM` | Set to `true` to disable installation of default custom nodes | false |
 | `HF_TOKEN` | Hugging Face token for authenticated downloads (not required for `z-image-turbo` or `flux1-dev` workflows, but can be provided for gated models) | - |
