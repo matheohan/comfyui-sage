@@ -156,6 +156,12 @@ setup_comfyui() {
     else
         echo "-- Default z-image-turbo workflow already exist, skipping... --"
     fi
+    if [ ! -f "./user/default/workflows/z_image_example.json" ]; then
+        echo "-- Get default z-image workflow --"
+        wget -P ./user/default/workflows/ https://github.com/matheohan/ComfyUI-Sage-Runpod/releases/download/workflow/z_image_example.json
+    else
+        echo "-- Default z-image workflow already exist, skipping... --"
+    fi
 
     # Create model directories
     mkdir -p models/{text_encoders,diffusion_models,vae,clip,unet}
@@ -282,6 +288,63 @@ download_flux1_dev() {
     echo "-- flux1-dev downloads completed! --"
 }
 
+# Download z-image models
+download_z_image() {
+    echo "-- Downloading z-image models --"
+    cd /workspace/ComfyUI
+
+    TEMP_DIR=$(mktemp -d)
+    PIDS=()
+    
+    # Download Text Encoder model if not exists
+    if [[ ! -f "models/text_encoders/qwen_3_4b.safetensors" ]]; then
+        hf download Comfy-Org/z_image \
+            split_files/text_encoders/qwen_3_4b.safetensors \
+            --local-dir "$TEMP_DIR" &
+        PIDS+=($!)
+    else
+        echo "Text encoder already exists, skipping..."
+    fi
+    
+    # Download z-image model if not exists
+    if [[ ! -f "models/diffusion_models/z_image_bf16.safetensors" ]]; then
+        hf download Comfy-Org/z_image \
+            split_files/diffusion_models/z_image_bf16.safetensors \
+            --local-dir "$TEMP_DIR" &
+        PIDS+=($!)
+    else
+        echo "Diffusion model already exists, skipping..."
+    fi
+    
+    # Download VAE model if not exists
+    if [[ ! -f "models/vae/ae.safetensors" ]]; then
+        hf download Comfy-Org/z_image \
+            split_files/vae/ae.safetensors \
+            --local-dir "$TEMP_DIR" &
+        PIDS+=($!)
+    else
+        echo "VAE already exists, skipping..."
+    fi
+
+    # Wait for all downloads if any
+    if [[ ${#PIDS[@]} -gt 0 ]]; then
+        echo "Waiting for z-image downloads..."
+        wait "${PIDS[@]}"
+        
+        # Move downloaded files to correct locations
+        [[ -f "$TEMP_DIR/split_files/text_encoders/qwen_3_4b.safetensors" ]] && \
+            mv "$TEMP_DIR/split_files/text_encoders/qwen_3_4b.safetensors" models/text_encoders/
+        [[ -f "$TEMP_DIR/split_files/diffusion_models/z_image_bf16.safetensors" ]] && \
+            mv "$TEMP_DIR/split_files/diffusion_models/z_image_bf16.safetensors" models/diffusion_models/
+        [[ -f "$TEMP_DIR/split_files/vae/ae.safetensors" ]] && \
+            mv "$TEMP_DIR/split_files/vae/ae.safetensors" models/vae/
+    fi
+    
+    rm -rf "$TEMP_DIR"
+    
+    echo "-- z-image downloads completed! --"
+}
+
 # Download model files based on workflow selection
 download_model_files() {
     echo "-- Downloading model files in parallel --"
@@ -306,12 +369,15 @@ download_model_files() {
         flux1-dev)
             download_flux1_dev
             ;;
+        z-image)
+            download_z_image
+            ;;
         none)
             echo "No workflow selected, skipping model downloads."
             ;;
         *)
             echo "Unknown workflow: $WORKFLOW"
-            echo "Available workflows: z-image-turbo, flux1-dev, none"
+            echo "Available workflows: z-image-turbo, flux1-dev, z-image, none"
             echo "Defaulting to z-image-turbo..."
             download_z_image_turbo
             ;;

@@ -20,12 +20,14 @@ When selecting a pod on RunPod, make sure to filter by **CUDA version 12.8 or ab
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `WORKFLOW` | Model workflow to download at startup. Options: `z-image-turbo`, `flux1-dev`, `none` | `z-image-turbo` |
+| `WORKFLOW` | Model workflow to download at startup. Options: `z-image-turbo`, `flux1-dev`, `z-image(*)`, `none` | `z-image-turbo` |
 | `DISABLE_SAGE` | Set to `true` to disable SageAttention and run ComfyUI without it | false |
 | `DISABLE_CUSTOM` | Set to `true` to disable installation of default custom nodes | false |
 | `HF_TOKEN` | Hugging Face token for authenticated downloads (not required for `z-image-turbo` or `flux1-dev` workflows, but can be provided for gated models) | - |
 | `JUPYTER_PASSWORD` | Password/token for JupyterLab access | - |
 | `PUBLIC_KEY` | SSH public key for authentication | - |
+
+(*) Currently z-image doesn't work with SageAttention so make sure to set `DISABLE_SAGE` to `true`!
 
 ## Pre-installed Custom Nodes
 
@@ -35,12 +37,13 @@ When selecting a pod on RunPod, make sure to filter by **CUDA version 12.8 or ab
 
 ## Default Workflows
 
-Two example workflows are pre-installed and ready to use:
+Three example workflows are pre-installed and ready to use:
 
 | Workflow | File |
 |----------|------|
 | Flux Dev | `flux_dev_example.json` |
 | Z-Image Turbo | `z_image_turbo_example.json` |
+| Z-Image | `z_image_example.json` |
 
 These workflows are located in `/workspace/ComfyUI/user/default/workflows/` and will appear in the ComfyUI workflow browser.
 
