@@ -156,6 +156,12 @@ setup_comfyui() {
     else
         echo "-- Default z-image-turbo workflow already exist, skipping... --"
     fi
+    if [ ! -f "./user/default/workflows/z_image_example.json" ]; then
+        echo "-- Get default z-image workflow --"
+        wget -P ./user/default/workflows/ https://github.com/matheohan/ComfyUI-Sage-Runpod/releases/download/workflow/z_image_example.json
+    else
+        echo "-- Default z-image workflow already exist, skipping... --"
+    fi
 
     # Create model directories
     mkdir -p models/{text_encoders,diffusion_models,vae,clip,unet}
